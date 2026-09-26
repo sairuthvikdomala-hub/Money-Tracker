@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nivesh — Money Tracker</title>
+<style>
+:root{
+  --bg:#0A0B0D; --card:#15171B; --card2:#1C1F24; --line:#26292F;
+  --ink:#ECEDEF; --muted:#8B8D93; --green:#00D9A3; --red:#FF6B6B; --amber:#F5B759; --violet:#A78BFA; --blue:#5EA1FF;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){
+  --bg:#F5F6F8; --card:#FFFFFF; --card2:#F0F1F4; --line:#E4E6EA; --ink:#15171B; --muted:#6B6E76;
+}}
+:root[data-theme="light"]{ --bg:#F5F6F8; --card:#FFFFFF; --card2:#F0F1F4; --line:#E4E6EA; --ink:#15171B; --muted:#6B6E76; }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;}
+.wrap{display:flex;min-height:100vh;}
+.side{width:220px;flex:none;border-right:1px solid var(--line);padding:24px 14px;position:sticky;top:0;height:100vh;}
+.brand{font-size:19px;font-weight:700;letter-spacing:-0.02em;padding:0 10px 22px;display:flex;align-items:center;gap:8px}
+.brand span.dot{width:9px;height:9px;border-radius:3px;background:var(--green);display:inline-block}
+.nav a{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:2px}
+.nav a.active{background:var(--card2);color:var(--ink)}
+.nav a:hover{color:var(--ink)}
+main{flex:1;min-width:0;padding:26px 28px 100px;max-width:1180px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:10px}
+h1{font-size:22px;margin:0;letter-spacing:-0.02em}
+.themeBtn,.logoutBtn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g2{grid-template-columns:2fr 1fr}
+@media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.label{color:var(--muted);font-size:12.5px;font-weight:500}
+.big{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin-top:6px}
+.sub{font-size:12.5px;color:var(--muted);margin-top:6px}
+.pos{color:var(--green)} .neg{color:var(--red)} .warn{color:var(--amber)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);gap:10px}
+.row:last-child{border-bottom:none}
+.pill{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.pill.income{background:rgba(0,217,163,.15);color:var(--green)}
+.pill.expense{background:rgba(255,107,107,.15);color:var(--red)}
+.pill.transfer{background:rgba(94,161,255,.15);color:var(--blue)}
+.pill.lend{background:rgba(245,183,89,.15);color:var(--amber)}
+.pill.borrow{background:rgba(167,139,250,.15);color:var(--violet)}
+.btn{background:var(--ink);color:var(--bg);border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13.5px;cursor:pointer}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.danger{background:transparent;border:1px solid var(--line);color:var(--red)}
+.fab{position:fixed;right:26px;bottom:26px;background:var(--green);color:#04231A;border:none;border-radius:16px;padding:14px 20px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 10px 30px rgba(0,217,163,.3);z-index:40}
+.bottomnav{display:none}
+@media(max-width:820px){
+  .side{display:none}
+  main{padding:18px 14px 90px}
+  .bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));justify-content:space-around;z-index:39}
+  .bottomnav a{color:var(--muted);text-decoration:none;font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .bottomnav a.active{color:var(--green)}
+  .fab{right:16px;bottom:74px}
+}
+.modalBg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:60}
+.modalBg.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:460px;border-radius:20px 20px 0 0;padding:22px;max-height:88vh;overflow:auto;border:1px solid var(--line)}
+@media(min-width:600px){.modalBg{align-items:center}.modal{border-radius:18px}}
+.f-row{margin-bottom:13px}
+label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:6px;font-weight:500}
+input,select{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:14.5px;outline:none}
+input:focus,select:focus{border-color:var(--green)}
+.typeTabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.typeTabs button{flex:1;min-width:70px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer}
+.typeTabs button.sel{border-color:var(--green);color:var(--green);background:rgba(0,217,163,.1)}
+.bar{height:8px;border-radius:6px;background:var(--card2);overflow:hidden;margin-top:8px}
+.bar>div{height:100%;border-radius:6px}
+.person{cursor:pointer}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:80;opacity:0;transition:opacity .25s}
+.toast.show{opacity:1}
+.empty{color:var(--muted);font-size:13.5px;padding:24px 0;text-align:center}
+.authWrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.authCard{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px}
+.authTabs{display:flex;gap:6px;margin-bottom:18px;background:var(--card2);border-radius:10px;padding:4px}
+.authTabs button{flex:1;padding:8px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-weight:600;font-size:13px;cursor:pointer}
+.authTabs button.sel{background:var(--card);color:var(--ink)}
+.authErr{color:var(--red);font-size:13px;margin-bottom:10px;min-height:16px}
+#appRoot{display:none}
+</style>
+</head>
+<body>
+
+<div class="authWrap" id="authWrap">
+  <div class="authCard">
+    <div class="brand"><span class="dot"></span>Nivesh</div>
+    <div class="authTabs">
+      <button id="tabLogin" class="sel" onclick="setAuthMode('login')">Log in</button>
+      <button id="tabSignup" onclick="setAuthMode('signup')">Sign up</button>
+    </div>
+    <div class="authErr" id="authErr"></div>
+    <div class="f-row" id="nameField" style="display:none"><label>Name</label><input id="authName" placeholder="Your name"></div>
+    <div class="f-row"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
+    <div class="f-row"><label>Password</label><input id="authPass" type="password" placeholder="••••••••"></div>
+    <button class="btn" style="width:100%" onclick="submitAuth()" id="authSubmitBtn">Log in</button>
+  </div>
+</div>
+
+<div id="appRoot">
+<div class="wrap">
+  <div class="side">
+    <div class="brand"><span class="dot"></span>Nivesh</div>
+    <div class="nav" id="nav">
+      <a data-p="dashboard">Dashboard</a>
+      <a data-p="transactions">Transactions</a>
+      <a data-p="people">People & Debts</a>
+      <a data-p="accounts">Accounts</a>
+      <a data-p="settings">Settings</a>
+    </div>
+  </div>
+  <main>
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div style="display:flex;gap:8px">
+        <button class="themeBtn" onclick="toggleTheme()">Theme</button>
+        <button class="logoutBtn" onclick="logout()">Log out</button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </main>
+</div>
+<div class="bottomnav" id="bnav">
+  <a data-p="dashboard">Home</a>
+  <a data-p="transactions">Txns</a>
+  <a data-p="people">People</a>
+  <a data-p="accounts">Accounts</a>
+  <a data-p="settings">More</a>
+</div>
+<button class="fab" onclick="openTxnModal()">+ Add</button>
+</div>
+
+<div class="modalBg" id="txnModalBg"><div class="modal" id="txnModal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS={income:['Salary','Freelance','Pocket Money','Refund','Other'],expense:['Food','Travel','College','Shopping','Bills','Entertainment','Education','Health','Other']};
+let token = localStorage.getItem('nivesh_token') || null;
+let theme = localStorage.getItem('nivesh_theme')||'dark';
+document.documentElement.setAttribute('data-theme',theme);
+let state = { accounts:[], people:[], txns:[] };
+
+// ---------- API helper ----------
+async function api(path, opts={}){
+  const res = await fetch('/api'+path, {
+    method: opts.method||'GET',
+    headers: Object.assign({'Content-Type':'application/json'}, token?{'Authorization':'Bearer '+token}:{}),
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error||'Request failed');
+  return data;
+}
+
+// ---------- auth ----------
+let authMode='login';
+function setAuthMode(m){ authMode=m; document.getElementById('tabLogin').classList.toggle('sel',m==='login'); document.getElementById('tabSignup').classList.toggle('sel',m==='signup'); document.getElementById('nameField').style.display=m==='signup'?'block':'none'; document.getElementById('authSubmitBtn').textContent=m==='signup'?'Create account':'Log in'; document.getElementById('authErr').textContent=''; }
+async function submitAuth(){
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPass').value;
+  const name=document.getElementById('authName').value.trim();
+  const errEl=document.getElementById('authErr'); errEl.textContent='';
+  try{
+    const out = authMode==='signup'
+      ? await api('/auth/register',{method:'POST',body:{name,email,password}})
+      : await api('/auth/login',{method:'POST',body:{email,password}});
+    token=out.token; localStorage.setItem('nivesh_token',token);
+    await bootApp();
+  }catch(e){ errEl.textContent=e.message; }
+}
+function logout(){ token=null; localStorage.removeItem('nivesh_token'); document.getElementById('appRoot').style.display='none'; document.getElementById('authWrap').style.display='flex'; }
+
+async function bootApp(){
+  try{
+    await api('/me'); // validates token
+  }catch(e){ token=null; localStorage.removeItem('nivesh_token'); document.getElementById('authWrap').style.display='flex'; document.getElementById('appRoot').style.display='none'; return; }
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('appRoot').style.display='block';
+  await refreshAll();
+  render();
+}
+async function refreshAll(){
+  const [accounts,people,txns] = await Promise.all([api('/accounts'),api('/people'),api('/transactions')]);
+  state.accounts=accounts; state.people=people; state.txns=txns;
+}
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function fmt(n){ n=Math.round(n); let s=Math.abs(n).toString(); let last3=s.slice(-3); let rest=s.slice(0,-3); if(rest) last3=','+last3; let out=rest.replace(/\B(?=(\d{2})+(?!\d))/g,',')+last3; return (n<0?'-':'')+'₹'+out; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function acctBalance(acc){
+  let b=Number(acc.initial)||0;
+  state.txns.forEach(t=>{
+    if(t.type==='income'&&t.accountId===acc.id) b+=t.amount;
+    if(t.type==='expense'&&t.accountId===acc.id) b-=t.amount;
+    if(t.type==='transfer'){ if(t.accountId===acc.id) b-=t.amount; if(t.toAccountId===acc.id) b+=t.amount; }
+    if(t.type==='lend'&&t.accountId===acc.id) b-=t.amount;
+    if(t.type==='repay_lend'&&t.accountId===acc.id) b+=t.amount;
+    if(t.type==='borrow'&&t.accountId===acc.id) b+=t.amount;
+    if(t.type==='repay_borrow'&&t.accountId===acc.id) b-=t.amount;
+  });
+  return b;
+}
+function totals(){
+  let income=0,expense=0,lent=0,returned=0,borrowed=0,repaidBorrow=0;
+  state.txns.forEach(t=>{
+    if(t.type==='income') income+=t.amount;
+    if(t.type==='expense') expense+=t.amount;
+    if(t.type==='lend') lent+=t.amount;
+    if(t.type==='repay_lend') returned+=t.amount;
+    if(t.type==='borrow') borrowed+=t.amount;
+    if(t.type==='repay_borrow') repaidBorrow+=t.amount;
+  });
+  const balance=state.accounts.reduce((a,ac)=>a+acctBalance(ac),0);
+  const theyOweMe=lent-returned, iOwe=borrowed-repaidBorrow;
+  return {balance,income,expense,lent,returned,borrowed,repaidBorrow,theyOweMe,iOwe,safe:balance-iOwe};
+}
+function personBalance(pid){
+  let lent=0,ret=0,borrow=0,repaid=0;
+  state.txns.forEach(t=>{ if(t.personId!==pid) return;
+    if(t.type==='lend') lent+=t.amount; if(t.type==='repay_lend') ret+=t.amount;
+    if(t.type==='borrow') borrow+=t.amount; if(t.type==='repay_borrow') repaid+=t.amount; });
+  return {owesMe:lent-ret, iOweThem:borrow-repaid};
+}
+function personName(id){ const p=state.people.find(p=>p.id===id); return p?p.name:'—'; }
+function acctName(id){ const a=state.accounts.find(a=>a.id===id); return a?a.name:'—'; }
+
+let page='dashboard';
+function go(p){ page=p; render(); }
+document.getElementById('nav').addEventListener('click',e=>{ if(e.target.dataset.p) go(e.target.dataset.p); });
+document.getElementById('bnav').addEventListener('click',e=>{ if(e.target.dataset.p) go(e.target.dataset.p); });
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+function toggleTheme(){ theme=theme==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',theme); localStorage.setItem('nivesh_theme',theme); }
+
+function render(){
+  document.querySelectorAll('#nav a,#bnav a').forEach(a=>a.classList.toggle('active',a.dataset.p===page));
+  document.getElementById('pageTitle').textContent={dashboard:'Dashboard',transactions:'Transactions',people:'People & Debts',accounts:'Accounts',settings:'Settings'}[page];
+  const c=document.getElementById('content');
+  if(page==='dashboard') c.innerHTML=renderDashboard();
+  if(page==='transactions') c.innerHTML=renderTxns();
+  if(page==='people') c.innerHTML=renderPeople();
+  if(page==='accounts') c.innerHTML=renderAccounts();
+  if(page==='settings') c.innerHTML=renderSettings();
+}
+
+function renderDashboard(){
+  const t=totals();
+  const cats={};
+  state.txns.filter(x=>x.type==='expense').forEach(x=>cats[x.category]=(cats[x.category]||0)+x.amount);
+  const catRows=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxCat=Math.max(1,...catRows.map(c=>c[1]));
+  const recent=[...state.txns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  return `
+  <div class="grid g4">
+    <div class="card"><div class="label">Available Balance</div><div class="big">${fmt(t.balance)}</div><div class="sub">Across ${state.accounts.length} accounts</div></div>
+    <div class="card"><div class="label">Total Income</div><div class="big pos">${fmt(t.income)}</div><div class="sub">All time</div></div>
+    <div class="card"><div class="label">Total Expenses</div><div class="big neg">${fmt(t.expense)}</div><div class="sub">All time</div></div>
+    <div class="card"><div class="label">Safe to Spend</div><div class="big" style="color:var(--green)">${fmt(t.safe)}</div><div class="sub">Balance − what you owe others</div></div>
+  </div>
+  <div class="grid g4" style="margin-top:14px">
+    <div class="card"><div class="label">Money Lent</div><div class="big warn">${fmt(t.lent)}</div></div>
+    <div class="card"><div class="label">Others Owe You</div><div class="big" style="color:var(--amber)">${fmt(t.theyOweMe)}</div></div>
+    <div class="card"><div class="label">You Owe Others</div><div class="big" style="color:var(--violet)">${fmt(t.iOwe)}</div></div>
+    <div class="card"><div class="label">Net Position</div><div class="big ${t.theyOweMe-t.iOwe>=0?'pos':'neg'}">${fmt(t.theyOweMe-t.iOwe)}</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:22px">
+    <div class="card">
+      <div class="label" style="margin-bottom:6px">Expense by Category</div>
+      ${catRows.length? catRows.map(([cat,amt])=>`<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${cat}</span><span class="sub">${fmt(amt)}</span></div><div class="bar"><div style="width:${amt/maxCat*100}%;background:var(--red)"></div></div></div>`).join('') : '<div class="empty">No expenses yet</div>'}
+    </div>
+    <div class="card">
+      <div class="label" style="margin-bottom:6px">Recent Activity</div>
+      ${recent.length? recent.map(txnRowHtml).join('') : '<div class="empty">No activity yet</div>'}
+    </div>
+  </div>`;
+}
+
+function txnRowHtml(t){
+  const sign = (t.type==='income'||t.type==='repay_lend'||t.type==='borrow') ? '+' : (t.type==='transfer'?'':'-');
+  const color = t.type==='income'?'pos':t.type==='expense'?'neg':t.type==='lend'?'warn':'';
+  const desc = t.type==='lend'?`Lent to ${personName(t.personId)}`:t.type==='borrow'?`Borrowed from ${personName(t.personId)}`:t.type==='repay_lend'?`${personName(t.personId)} repaid you`:t.type==='repay_borrow'?`You repaid ${personName(t.personId)}`:t.type==='transfer'?`${acctName(t.accountId)} → ${acctName(t.toAccountId)}`:(t.desc||t.category);
+  return `<div class="row"><div><div style="font-size:13.5px;font-weight:500">${desc}</div><div class="sub">${t.date}${t.category&&t.type!=='transfer'?' · '+t.category:''}</div></div><div class="${color}" style="font-weight:700;font-size:13.5px">${sign}${fmt(t.amount)}</div></div>`;
+}
+
+function renderTxns(){
+  const rows=[...state.txns].sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="card">${rows.length? rows.map(t=>`
+    <div class="row"><div style="display:flex;gap:10px;align-items:center;min-width:0">
+      <span class="pill ${t.type==='repay_lend'?'lend':t.type==='repay_borrow'?'borrow':t.type}">${t.type.replace('_',' ')}</span>
+      <div style="min-width:0"><div style="font-size:13.5px">${t.desc||t.category||personName(t.personId)}</div><div class="sub">${t.date} · ${acctName(t.accountId)}</div></div>
+    </div><div style="display:flex;align-items:center;gap:10px;flex:none">
+      <span style="font-weight:700;font-size:13.5px">${fmt(t.amount)}</span>
+      <button class="btn danger" style="padding:5px 9px;font-size:12px" onclick="delTxn('${t.id}')">Delete</button>
+    </div></div>`).join('') : '<div class="empty">No transactions yet. Tap + Add to create one.</div>'}</div>`;
+}
+async function delTxn(id){
+  if(!confirm('Delete this transaction? This cannot be undone.')) return;
+  await api('/transactions/'+id,{method:'DELETE'});
+  state.txns=state.txns.filter(t=>t.id!==id); render(); toast('Deleted');
+}
+
+function renderPeople(){
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="label">People</div><button class="btn ghost" style="padding:6px 12px;font-size:12.5px" onclick="openPersonModal()">+ Add Person</button>
+    </div>
+    ${state.people.length? state.people.map(p=>{
+      const b=personBalance(p.id);
+      const net=b.owesMe-b.iOweThem;
+      return `<div class="row person" onclick="openPersonDetail('${p.id}')">
+        <div style="font-weight:500;font-size:14px">${p.name}</div>
+        <div class="${net>=0?'pos':'neg'}" style="font-weight:700;font-size:13.5px">${net>=0?'Owes you '+fmt(net):'You owe '+fmt(-net)}</div>
+      </div>`;
+    }).join('') : '<div class="empty">No people added yet.</div>'}
+  </div>`;
+}
+function openPersonModal(){
+  const m=document.getElementById('txnModal');
+  m.innerHTML=`<div class="label" style="margin-bottom:14px;font-size:16px;font-weight:700;color:var(--ink)">Add Person</div>
+  <div class="f-row"><label>Name</label><input id="pName" placeholder="e.g. Rahul"></div>
+  <button class="btn" style="width:100%" onclick="savePerson()">Save</button>`;
+  document.getElementById('txnModalBg').classList.add('open');
+}
+async function savePerson(){
+  const name=document.getElementById('pName').value.trim(); if(!name) return;
+  const row=await api('/people',{method:'POST',body:{name}});
+  state.people.push(row); closeModal(); render(); toast('Person added');
+}
+
+function openPersonDetail(pid){
+  const p=state.people.find(x=>x.id===pid); const b=personBalance(pid);
+  const hist=state.txns.filter(t=>t.personId===pid).sort((a,b)=>b.date.localeCompare(a.date));
+  const m=document.getElementById('txnModal');
+  m.innerHTML=`<div style="font-size:17px;font-weight:700;margin-bottom:4px">${p.name}</div>
+  <div class="sub" style="margin-bottom:14px">${b.owesMe>0?`Owes you ${fmt(b.owesMe)}`:''} ${b.iOweThem>0?`You owe ${fmt(b.iOweThem)}`:''} ${b.owesMe===0&&b.iOweThem===0?'All settled':''}</div>
+  <div class="typeTabs">
+    <button class="btn ghost" style="flex:1" onclick="quickPersonTxn('${pid}','lend')">Lend</button>
+    <button class="btn ghost" style="flex:1" onclick="quickPersonTxn('${pid}','repay_lend')">They Repaid</button>
+    <button class="btn ghost" style="flex:1" onclick="quickPersonTxn('${pid}','borrow')">Borrow</button>
+    <button class="btn ghost" style="flex:1" onclick="quickPersonTxn('${pid}','repay_borrow')">Repay Them</button>
+  </div>
+  <div class="label" style="margin:14px 0 4px">History</div>
+  <div id="personHist">${hist.length? hist.map(personHistRow).join('') : '<div class="empty">No history yet</div>'}</div>
+  <button class="btn danger" style="width:100%;margin-top:14px" onclick="deletePerson('${pid}')">Delete this person</button>`;
+  document.getElementById('txnModalBg').classList.add('open');
+}
+function personHistRow(t){
+  return `<div class="row"><div><div style="font-size:13px">${({lend:'You lent',repay_lend:'They repaid',borrow:'You borrowed',repay_borrow:'You repaid'})[t.type]}</div><div class="sub">${t.date}</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;font-size:13px">${fmt(t.amount)}</span><button class="btn danger" style="padding:4px 8px;font-size:11px" onclick="deleteHistTxn('${t.id}','${t.personId}')">Delete</button></div></div>`;
+}
+async function deleteHistTxn(id,pid){
+  if(!confirm('Delete this entry? This cannot be undone.')) return;
+  await api('/transactions/'+id,{method:'DELETE'});
+  state.txns=state.txns.filter(t=>t.id!==id);
+  openPersonDetail(pid); render();
+  toast('Deleted');
+}
+async function deletePerson(pid){
+  if(!confirm('Delete this person and all their lending/borrowing history?')) return;
+  const related=state.txns.filter(t=>t.personId===pid);
+  await Promise.all(related.map(t=>api('/transactions/'+t.id,{method:'DELETE'})));
+  await api('/people/'+pid,{method:'DELETE'});
+  state.txns=state.txns.filter(t=>t.personId!==pid);
+  state.people=state.people.filter(p=>p.id!==pid);
+  closeModal(); render(); toast('Person deleted');
+}
+async function quickPersonTxn(pid,type){
+  const amt=prompt('Amount (₹)'); if(!amt||isNaN(amt)||Number(amt)<=0) return;
+  const acc=state.accounts[0]; if(!acc){toast('Add an account first');return;}
+  const row=await api('/transactions',{method:'POST',body:{type,amount:Number(amt),personId:pid,accountId:acc.id,date:todayStr()}});
+  state.txns.push(row); openPersonDetail(pid); render(); toast('Saved');
+}
+
+function renderAccounts(){
+  const t=totals();
+  return `<div class="grid g4">${state.accounts.map(a=>`<div class="card"><div style="display:flex;justify-content:space-between"><div><div class="label">${a.name}</div><div class="sub">${a.type}</div></div><button class="btn danger" style="padding:4px 8px;font-size:11px" onclick="deleteAccount('${a.id}')">Delete</button></div><div class="big">${fmt(acctBalance(a))}</div></div>`).join('')}
+  <div class="card" style="display:flex;align-items:center;justify-content:center;cursor:pointer;border-style:dashed" onclick="openAccountModal()"><div class="label">+ Add Account</div></div>
+  </div>
+  <div class="card" style="margin-top:16px"><div class="label">Total Across Accounts</div><div class="big">${fmt(t.balance)}</div></div>`;
+}
+async function deleteAccount(id){
+  if(!confirm('Delete this account? Its transactions will remain but reference a missing account.')) return;
+  await api('/accounts/'+id,{method:'DELETE'});
+  state.accounts=state.accounts.filter(a=>a.id!==id); render(); toast('Account deleted');
+}
+function openAccountModal(){
+  const m=document.getElementById('txnModal');
+  m.innerHTML=`<div class="label" style="margin-bottom:14px;font-size:16px;font-weight:700;color:var(--ink)">Add Account</div>
+  <div class="f-row"><label>Account Name</label><input id="aName" placeholder="e.g. HDFC Bank"></div>
+  <div class="f-row"><label>Type</label><select id="aType"><option>Cash</option><option>Bank</option><option>UPI</option><option>Wallet</option><option>Other</option></select></div>
+  <div class="f-row"><label>Starting Balance (₹)</label><input id="aInit" type="number" placeholder="0"></div>
+  <button class="btn" style="width:100%" onclick="saveAccount()">Save</button>`;
+  document.getElementById('txnModalBg').classList.add('open');
+}
+async function saveAccount(){
+  const name=document.getElementById('aName').value.trim(); if(!name) return;
+  const row=await api('/accounts',{method:'POST',body:{name,type:document.getElementById('aType').value,initial:Number(document.getElementById('aInit').value||0)}});
+  state.accounts.push(row); closeModal(); render(); toast('Account added');
+}
+
+function renderSettings(){
+  return `<div class="card">
+    <div class="row"><div>Load sample demo data</div><button class="btn ghost" onclick="loadDemo()">Load</button></div>
+    <div class="row"><div>Export my data (JSON)</div><button class="btn ghost" onclick="exportData()">Export</button></div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="sub">Your data lives in this server's local database (server/data/db.json) and is scoped to your account only. See the README for how to change the login secret and deploy this elsewhere.</div></div>`;
+}
+function exportData(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='nivesh-export.json'; a.click(); }
+async function loadDemo(){
+  if(!confirm('Add sample accounts, people and transactions?')) return;
+  const acc1=await api('/accounts',{method:'POST',body:{name:'Cash',type:'Cash',initial:1500}});
+  const acc2=await api('/accounts',{method:'POST',body:{name:'SBI Bank',type:'Bank',initial:6000}});
+  const acc3=await api('/accounts',{method:'POST',body:{name:'UPI Wallet',type:'UPI',initial:1000}});
+  const p1=await api('/people',{method:'POST',body:{name:'Rahul'}});
+  const p2=await api('/people',{method:'POST',body:{name:'Sneha'}});
+  const d=(n)=>{const dt=new Date();dt.setDate(dt.getDate()-n);return dt.toISOString().slice(0,10);};
+  const seed=[
+    {type:'income',amount:15000,category:'Salary',accountId:acc2.id,date:d(9),desc:'Monthly salary'},
+    {type:'income',amount:5000,category:'Freelance',accountId:acc2.id,date:d(6),desc:'Freelance payment'},
+    {type:'expense',amount:1250,category:'Food',accountId:acc1.id,date:d(1),desc:'Groceries + eating out'},
+    {type:'expense',amount:800,category:'Travel',accountId:acc3.id,date:d(3),desc:'Cab rides'},
+    {type:'lend',amount:1000,personId:p1.id,accountId:acc1.id,date:d(8),desc:'Lent for books'},
+    {type:'repay_lend',amount:400,personId:p1.id,accountId:acc1.id,date:d(5),desc:'Partial return'},
+    {type:'borrow',amount:1500,personId:p2.id,accountId:acc2.id,date:d(7),desc:'Borrowed for trip'},
+  ];
+  for(const t of seed) await api('/transactions',{method:'POST',body:t});
+  await refreshAll(); render(); toast('Demo data loaded');
+}
+
+function closeModal(){ document.getElementById('txnModalBg').classList.remove('open'); }
+document.getElementById('txnModalBg').addEventListener('click',e=>{ if(e.target.id==='txnModalBg') closeModal(); });
+
+let txnType='expense';
+function openTxnModal(){
+  txnType='expense';
+  const m=document.getElementById('txnModal');
+  m.innerHTML=`<div class="label" style="margin-bottom:12px;font-size:16px;font-weight:700;color:var(--ink)">Add Transaction</div>
+  <div class="typeTabs" id="typeTabs"></div>
+  <div id="txnFields"></div>
+  <button class="btn" style="width:100%;margin-top:6px" onclick="saveTxn()">Save Transaction</button>`;
+  buildTypeTabs(); buildTxnFields();
+  document.getElementById('txnModalBg').classList.add('open');
+}
+function buildTypeTabs(){
+  const types=['expense','income','transfer','lend','borrow'];
+  document.getElementById('typeTabs').innerHTML=types.map(t=>`<button class="${t===txnType?'sel':''}" onclick="setTxnType('${t}')">${t}</button>`).join('');
+}
+function setTxnType(t){ txnType=t; buildTypeTabs(); buildTxnFields(); }
+function buildTxnFields(){
+  const accOpts=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  const peopleOpts=state.people.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  let html=`<div class="f-row"><label>Amount (₹)</label><input id="fAmt" type="number" placeholder="0"></div>`;
+  if(txnType==='income'||txnType==='expense'){
+    html+=`<div class="f-row"><label>Category</label><select id="fCat">${CATS[txnType].map(c=>`<option>${c}</option>`).join('')}</select></div>`;
+  }
+  if(txnType==='transfer'){
+    html+=`<div class="f-row"><label>From Account</label><select id="fAcc">${accOpts}</select></div>
+    <div class="f-row"><label>To Account</label><select id="fToAcc">${accOpts}</select></div>`;
+  } else {
+    html+=`<div class="f-row"><label>Account</label><select id="fAcc">${accOpts||'<option value="">Add an account first</option>'}</select></div>`;
+  }
+  if(txnType==='lend'||txnType==='borrow'){
+    html+=`<div class="f-row"><label>Person</label><select id="fPerson">${peopleOpts||'<option value="">Add a person first</option>'}</select></div>`;
+  }
+  html+=`<div class="f-row"><label>Date</label><input id="fDate" type="date" value="${todayStr()}"></div>
+  <div class="f-row"><label>Note (optional)</label><input id="fDesc" placeholder="What was this for?"></div>`;
+  document.getElementById('txnFields').innerHTML=html;
+}
+async function saveTxn(){
+  const amount=Number(document.getElementById('fAmt').value);
+  if(!amount||amount<=0){ toast('Enter a valid amount'); return; }
+  const t={type:txnType,amount,date:document.getElementById('fDate').value||todayStr(),desc:document.getElementById('fDesc')?.value||''};
+  if(txnType==='income'||txnType==='expense') t.category=document.getElementById('fCat').value;
+  if(txnType==='transfer'){ t.accountId=document.getElementById('fAcc').value; t.toAccountId=document.getElementById('fToAcc').value; if(!t.accountId||!t.toAccountId||t.accountId===t.toAccountId){toast('Pick two different accounts');return;} }
+  else { t.accountId=document.getElementById('fAcc').value; if(!t.accountId){toast('Add an account first');return;} }
+  if(txnType==='lend'||txnType==='borrow'){ t.personId=document.getElementById('fPerson').value; if(!t.personId){toast('Add a person first');return;} }
+  const row=await api('/transactions',{method:'POST',body:t});
+  state.txns.push(row); closeModal(); render(); toast('Transaction saved');
+}
+
+// ---------- boot ----------
+if(token){ bootApp(); } else { document.getElementById('authWrap').style.display='flex'; }
+document.getElementById('authPass').addEventListener('keydown',e=>{ if(e.key==='Enter') submitAuth(); });
+</script>
+</body>
+</html>
