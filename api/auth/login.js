@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
     await ensureSchema();
     const { email, password } = req.body || {};
     const r = await sql`SELECT * FROM users WHERE email = ${(email || '').toLowerCase()}`;
-    const user = r.rows[0];
+    const user = r[0];
     if (!user || !bcrypt.compareSync(password || '', user.password_hash)) {
       return res.status(401).json({ error: 'Incorrect email or password' });
     }
