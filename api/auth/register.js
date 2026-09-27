@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     if (!name || !email || !password) return res.status(400).json({ error: 'Name, email and password are required' });
     if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
     const existing = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()}`;
-    if (existing.rows.length) return res.status(409).json({ error: 'An account with that email already exists' });
+    if (existing.length) return res.status(409).json({ error: 'An account with that email already exists' });
     const id = crypto.randomBytes(9).toString('hex');
     const hash = bcrypt.hashSync(password, 10);
     await sql`INSERT INTO users (id, name, email, password_hash) VALUES (${id}, ${name}, ${email.toLowerCase()}, ${hash})`;
