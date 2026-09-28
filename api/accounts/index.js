@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
     const uid = requireAuth(req);
     if (req.method === 'GET') {
       const r = await sql`SELECT * FROM accounts WHERE user_id = ${uid} ORDER BY created_at`;
-      return res.status(200).json(r.rows.map(toApi));
+      return res.status(200).json(r.map(toApi));
     }
     if (req.method === 'POST') {
       const { name, type, initial } = req.body || {};
